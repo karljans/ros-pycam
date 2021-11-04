@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>py_camera</name>
+  <version>0.0.1</version>
+  <description>OpenCV/GStreamer camera driver for ROS, implemented in Python
+  </description>
+  <maintainer email="karl.janson@taltech.ee">Karl Janson</maintainer>
+  <license>Apache Version 2.0</license>
+
+  <url type="website">https://github.com/karljans/ros-pycam</url>
+  <author email="karl.janson@taltech.ee">Karl Janson</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>rospy</run_depend>
+  <run_depend>python3-opencv</run_depend>
+</package>
