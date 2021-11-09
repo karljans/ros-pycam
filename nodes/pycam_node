@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+
+import sys
+import rospy
+import traceback
+
+from pycam_lib.driver import Driver, DriverException
+from pycam_lib.camera import CameraException
+from pycam_lib.log import PyCamLog
+
+LOG_LEVEL = rospy.DEBUG
+
+def node_main():
+
+    rate = 1
+
+    # Set up logging
+    if rospy.has_param('/pycam_node/loglevel'):
+        loglevel = rospy.get_param('/pycam_node/loglevel')
+    else:
+        loglevel = LOG_LEVEL
+
+    # Initialize node
+    rospy.init_node('pycam', log_level=loglevel)
+    PyCamLog.debug("Node Init Started")
+
+    try:
+        # Initialize driver
+        driver = Driver()
+        rate = driver.get_rate()
+        PyCamLog.debug(f"ROS rate: {rate}")
+        PyCamLog.debug("Node Init Finished")
+
+        # Main loop
+        while not rospy.is_shutdown():
+            driver.advance()
+            rospy.sleep(rate)
+
+        return 0
+
+    except DriverException as e:
+        PyCamLog.fatal(str(e))
+
+    except CameraException as e:
+        PyCamLog.fatal(str(e))
+    
+    except Exception as e:
+        PyCamLog.fatal(str(e))
+        print(traceback.format_exc())
+
+    return 1
+
+if __name__ == '__main__':
+    sys.exit(node_main())
