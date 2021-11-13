@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 
 import sys
-import rospy
 import traceback
 
-from pycam_lib.driver import Driver, DriverException
+import rospy
 from pycam_lib.camera import CameraException
+from pycam_lib.driver import Driver, DriverException
 from pycam_lib.log import PyCamLog
 
 LOG_LEVEL = rospy.DEBUG
 
 def node_main():
-
-    rate = 1
 
     # Set up logging
     if rospy.has_param('/pycam_node/loglevel'):

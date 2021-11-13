@@ -42,24 +42,18 @@ class Camera:
         CameraException: In case of errors in the camera class
     '''
     
-    def __init__(self, publisher=None, video_src=None, src_is_gst=None, src_is_file=None, 
-                 width=0, height=0, fps=0):
-        self.video_src = video_src
-        self.src_is_gst = src_is_gst
-        self.src_is_file = src_is_file
+    def __init__(self, publisher=None, pipeline=None):
+        self.__pipeline = pipeline
 
-        self.width = width
-        self.height = height
-        self.fps = fps
+        self.__cap = None
+        self.__frame = None
 
-        self.cap = None
-        self.frame = None
+        self.__publisher = publisher
 
-        self.publisher = publisher
-
-        self.enable_counter = True
-        self.prev_frame_time = time.time()
+        self.__enable_counter = True
+        self.__prev_frame_time = time.time()
         
+        # Set up camera
         self.__setup()
 
     def __setup(self):
@@ -69,61 +63,26 @@ class Camera:
         '''
         PyCamLog.info("Begin camera setup")
 
-        # Input is Pipeline
-        if self.src_is_gst:
+        # Open GStreamer pipeline
+        PyCamLog.info(f"Opening pipeline: {self.__pipeline}")
+        self.__cap = cv2.VideoCapture(self.__pipeline, cv2.CAP_GSTREAMER)
 
-            # Open GStreamer pipeline
-            PyCamLog.info(f"Opening pipeline: {self.video_src}")
-            self.cap = cv2.VideoCapture(self.video_src, cv2.CAP_GSTREAMER)
-
-            if not self.cap.isOpened():
-                raise CameraException("Cannot open video source!")
-
-        # Input is not pipeline
-        else:
-            PyCamLog.info(f"Opening video source: {self.video_src}")
-            self.cap = cv2.VideoCapture(self.video_src)
-
-            if not self.cap.isOpened():
-                raise CameraException("Cannot open video source!")
-
-            # Input is file
-            if not self.src_is_file:
-
-                if self.width > 0:
-                    self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-
-                if self.height > 0:
-                    self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-
-                if self.fps > 0:
-                    self.cap.set(cv2.CAP_PROP_FPS, self.fps)
+        if not self.__cap.isOpened():
+            raise CameraException("Cannot open video source!")
 
         # Read one frame to verify that everyhing is working and to get actual video parameters
-        ret, frame = self.cap.read()
+        ret, frame = self.__cap.read()
         if not ret:
             raise CameraException('Cannot read from opened input!')
 
-        # Read size
-        self.height, self.width, _ = frame.shape
-
-        # If we are reading file, scroll back to first frame
-        if self.src_is_file:
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 1)
-
-        # Read the actual FPS value of the video (won't work)
-        if not self.src_is_gst:
-            self.fps = self.cap.get(cv2.CAP_PROP_FPS)
-
         PyCamLog.debug("Camera setup complete")
-        PyCamLog.debug(f"Video Parameters are the following: {self.width}x{self.height}@{self.fps}")
 
     def __counter_start(self):
-        self.prev_frame_time = time.time()
+        self.__prev_frame_time = time.time()
 
     def __counter_stop(self):
         curr_counter_time = time.time()
-        fps = str(int(1 / (curr_counter_time - self.prev_frame_time)))
+        fps = str(int(1 / (curr_counter_time - self.__prev_frame_time)))
         return fps
 
     def get_fps(self):
@@ -133,7 +92,7 @@ class Camera:
 
         return self.fps
 
-    def read(self, fps):
+    def read(self, fps=None):
         '''
         Reads a frame from camera
 
@@ -142,15 +101,19 @@ class Camera:
         '''
         ret = False
         
-        if self.cap.isOpened():
-            ret, self.frame = self.cap.read()
+        if self.__cap.isOpened():
+            ret, self.__frame = self.__cap.read()
 
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        self.frame = cv2.putText(self.frame, fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
+        # If an fps value was provided, put it on the video
+        if fps:
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            text = f"AVG FPS: {fps}"
+            self.__frame = cv2.putText(self.__frame, text, (7, 70), font, 2, 
+                                      (100, 255, 0), 3, cv2.LINE_AA)
         return ret
 
     def publish(self):
-        if self.publisher is None:
+        if self.__publisher is None:
             raise CameraException("Publisher is None!")
 
-        self.publisher.publish(self.frame)
+        self.__publisher.publish(self.__frame)
