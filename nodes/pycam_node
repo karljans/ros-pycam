@@ -3,10 +3,14 @@
 import sys
 import traceback
 
+import gi
 import rospy
 from pycam_lib.camera import CameraException
 from pycam_lib.driver import Driver, DriverException
 from pycam_lib.log import PyCamLog
+
+gi.require_version('Gst', '1.0')
+from gi.repository import GLib
 
 LOG_LEVEL = rospy.DEBUG
 
@@ -25,23 +29,16 @@ def node_main():
     try:
         # Initialize driver
         driver = Driver()
-        rate = driver.get_rate()
-        PyCamLog.debug(f"ROS rate: {rate}")
         PyCamLog.debug("Node Init Finished")
 
-        # Main loop
-        while not rospy.is_shutdown():
-            driver.advance()
-            rospy.sleep(rate)
+        # Blocks until driver finishes
+        driver.run()
 
         return 0
 
-    except DriverException as e:
+    except (DriverException, CameraException, GLib.Error) as e:
         PyCamLog.fatal(str(e))
 
-    except CameraException as e:
-        PyCamLog.fatal(str(e))
-    
     except Exception as e:
         PyCamLog.fatal(str(e))
         print(traceback.format_exc())

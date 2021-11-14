@@ -1,13 +1,11 @@
 import time
 
 import rospy
+import signal
 
 from pycam_lib.camera import Camera, CameraException
 from pycam_lib.log import PyCamLog
 from pycam_lib.publisher import Publisher
-
-# How often to print average FPS
-FPS_AVG_TIME = 10
 
 class DriverException(Exception):
     '''
@@ -32,18 +30,9 @@ class Driver:
 
     def __init__(self):
         self.__camera = None
-        self.__rate = None
 
-        # For FPS calculation
-        self.__measure_fps = False
-        self.__display_fps = False
-        self.__print_fps_values = False 
-
-        self.__prev_frame_time = time.time()
-        self.__fps_measure_time_start = time.time()
-
-        self.__fps_values = []
-        self.__last_avg_fps = None
+        signal.signal(signal.SIGINT, self.__sigint_handler)
+        signal.signal(signal.SIGTERM, self.__sigterm_handler)
 
         # Setup the driver
         self.__setup()
@@ -62,42 +51,25 @@ class Driver:
         
         # Read GSt pipeline
         if rospy.has_param('/pycam_node/gst_pipeline'):
-            pipeline = rospy.get_param('/pycam_node/gst_pipeline')
+            pipeline = str(rospy.get_param('/pycam_node/gst_pipeline'))
 
         else:
             raise DriverException("Cannot find GStreamer pipeline in launch configuration!")
 
-        # Read ROS rate
-        if rospy.has_param('/pycam_node/fps'):
-            fps = float(rospy.get_param('/pycam_node/fps'))
-            self.__rate = 1/rospy.get_param('/pycam_node/fps')
-            PyCamLog.info(f"FPS from parameters: {fps}. "
-                          f"This results in ROS rate of {round(self.__rate, 2)}.")
-
-        if rospy.has_param('/pycam_node/rate'):
-            if self.__rate is not None:
-                PyCamLog.warn("Both 'rate' and 'fps' variables specified. "
-                              f"FPS parameter will be ignored!")
-
-            self.__rate = float(rospy.get_param('/pycam_node/rate'))
-            PyCamLog.info(f"ROS rate from parameters: {self.__rate}. "
-                          f"This results in FPS value of {round(1/self.__rate)}.")
-
-            
-        if self.__rate is None:
-            raise DriverException("Neither rate nor FPS value specified in configuration! "
-                                  "Cannot continue. Sorry.")
-
         # FPS measurement
+        measure_fps = False
+        print_fps_values = False
+        display_fps = False
+
         if rospy.has_param('/pycam_node/measure_fps'):
-            self.__measure_fps = bool(rospy.get_param('/pycam_node/measure_fps'))
+            measure_fps = bool(rospy.get_param('/pycam_node/measure_fps'))
 
         if rospy.has_param('/pycam_node/print_fps_values'):
-            self.__print_fps_values = bool(rospy.get_param('/pycam_node/print_fps_values'))
+            print_fps_values = bool(rospy.get_param('/pycam_node/print_fps_values'))
 
         if rospy.has_param('/pycam_node/display_fps'):
-            self.__display_fps = bool(rospy.get_param('/pycam_node/display_fps'))
-            self.__measure_fps = bool(rospy.get_param('/pycam_node/measure_fps'))
+            display_fps = bool(rospy.get_param('/pycam_node/display_fps'))
+            measure_fps = bool(rospy.get_param('/pycam_node/measure_fps'))
 
         # Read publisher conf
         calib_file = ''
@@ -117,51 +89,28 @@ class Driver:
         publisher = Publisher(topic_prefix, queue_size, calib_file)
 
         # Setup the camera
-        self.__camera = Camera(publisher, pipeline)
+        self.__camera = Camera(publisher, pipeline, measure_fps, print_fps_values, display_fps)
 
         PyCamLog.debug("Finished driver setup")
 
-    def __calculate_fps(self):
+    def __sigint_handler(self, sig, frame):
         '''
-        Calculates average FPS and prints it on the screen
+        Stops the GStreamer's main loop when a SIGINT is received
         '''
+        PyCamLog.debug("Received SIGINT, stopping")
+        self.__camera.stop()
 
-        curr_time = time.time()
-
-        fps = round(1 / (curr_time - self.__prev_frame_time))
-        self.__prev_frame_time = curr_time
-
-        self.__fps_values.append(fps)
-
-        if curr_time - self.__fps_measure_time_start >= FPS_AVG_TIME:
-            avg_fps = round(sum(self.__fps_values) / len(self.__fps_values))
-
-            if self.__display_fps:
-                self.__last_avg_fps = avg_fps
-
-            if self.__print_fps_values:
-                print(self.__fps_values)
-
-            print('AVG FPS:', avg_fps)
-
-            self.__fps_values = []
-            self.__fps_measure_time_start = curr_time
-
-    def get_rate(self):
+    def __sigterm_handler(self, sig, frame):
         '''
-        Gets the ROS sleeping rate
+        Stops the GStreamer's main loop when a SIGTERM is received
         '''
+        PyCamLog.debug("Received SIGTERM, stopping")
+        self.__camera.stop()
 
-        return self.__rate
-
-    def advance(self):
+    def run(self):
         '''
-        Reads a frame from camera and publishes it to ROS
+        Starts the camera
         '''
-        
-        if self.__measure_fps:
-            self.__calculate_fps()
+        self.__camera.start()
 
-        if self.__camera.read(self.__last_avg_fps):
-            self.__camera.publish()
 

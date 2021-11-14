@@ -1,8 +1,11 @@
-import rospy
-import time
-from sensor_msgs.msg import CameraInfo, Image
-from pycam_lib.log import PyCamLog
 import os
+import time
+
+import rospy
+from cv_bridge import CvBridge
+from sensor_msgs.msg import CameraInfo, Image
+
+from pycam_lib.log import PyCamLog
 
 TOPIC_CAM_INFO = 'camera_info'
 TOPIC_IMG_RAW = 'image_raw'
@@ -30,6 +33,8 @@ class Publisher:
         self.img_pub = rospy.Publisher(img_raw_topic, Image, queue_size=queue_size)
 
         self.camera_info = self.__get_camera_info(calib_file)
+
+        self.bridge = CvBridge()
 
     def __get_camera_info(self, calib_file):
         '''
@@ -75,14 +80,9 @@ class Publisher:
             stamp: timestamp to write on the image
         '''
 
-        img_msg = Image()
-        img_msg.height = image.shape[0]
-        img_msg.width = image.shape[1]
-        img_msg.step = image.strides[0]
-        img_msg.encoding = 'bgr8'
+        img_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
         img_msg.header.frame_id = 'py_cam'
         img_msg.header.stamp = stamp
-        img_msg.data = image.flatten().tolist()
 
         self.img_pub.publish(img_msg)
 
