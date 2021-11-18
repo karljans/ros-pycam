@@ -10,11 +10,25 @@ from sensor_msgs.msg import CameraInfo, CompressedImage, Image
 from turbojpeg import TJPF_RGBA, TurboJPEG
 
 from pycam_lib.log import PyCamLog
-# from pycam_lib.driver import DriverException
 
 TOPIC_CAM_INFO = 'camera_info'
 TOPIC_IMG_RAW = 'image_raw'
 TOPIC_IMG_COMPRESSED = 'compressed'
+
+class PublisherException(Exception):
+    '''
+    Exception raised in case of errors in the publisher code
+
+    Attributes:
+        message: explanation for the error
+    '''
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self):
+        return "Publisher Exception: " + str(self.message)
 
 class Publisher:
     def __init__(self, topic_prefix='/pycam', queue_size=1, calib_file=''):
@@ -63,22 +77,20 @@ class Publisher:
 
             calib_file = os.path.abspath(os.path.expanduser(calib_file))
 
-            # if not os.path.isfile(calib_file):
-            #     raise DriverException("Calibration file does not exist!")
+            try:
+                with open(calib_file, 'r') as f:
+                    params = yaml.load(f, Loader=yaml.FullLoader)
 
-            # if not os.access(calib_file, os.R_OK):
-            #     raise DriverException("Cannot read calibration file!")
+                    cam_info.height = params['image_height']
+                    cam_info.width = params['image_width']
+                    cam_info.distortion_model = params['distortion_model']
+                    cam_info.K = params['camera_matrix']['data']
+                    cam_info.D = params['distortion_coefficients']['data']
+                    cam_info.R = params['rectification_matrix']['data']
+                    cam_info.P = params['projection_matrix']['data']
 
-            with open(calib_file, 'r') as f:
-                params = yaml.load(f)
-
-                cam_info.height = params['image_height']
-                cam_info.width = params['image_width']
-                cam_info.distortion_model = params['distortion_model']
-                cam_info.K = params['camera_matrix']['data']
-                cam_info.D = params['distortion_coefficients']['data']
-                cam_info.R = params['rectification_matrix']['data']
-                cam_info.P = params['projection_matrix']['data']
+            except (yaml.YAMLError, OSError) as err:
+                raise PublisherException(f"Cannot read camera calibration file: {err}")
 
         return cam_info
 
@@ -114,7 +126,7 @@ class Publisher:
 
         self.img_pub.publish(img_msg)
 
-    def __publish_compressed(self, image, stamp): # TODO
+    def __publish_compressed(self, image, stamp):
         '''
         Publishes raw image in ROS
 

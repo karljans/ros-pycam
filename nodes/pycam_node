@@ -8,6 +8,7 @@ import rospy
 from pycam_lib.camera import CameraException
 from pycam_lib.driver import Driver, DriverException
 from pycam_lib.log import PyCamLog
+from pycam_lib.publisher import PublisherException
 
 gi.require_version('Gst', '1.0')
 from gi.repository import GLib
@@ -36,7 +37,7 @@ def node_main():
 
         return 0
 
-    except (DriverException, CameraException, GLib.Error) as e:
+    except (DriverException, CameraException, PublisherException, GLib.Error) as e:
         PyCamLog.fatal(str(e))
 
     except Exception as e:

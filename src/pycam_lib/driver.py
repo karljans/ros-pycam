@@ -111,6 +111,7 @@ class Driver:
         '''
         Starts the camera
         '''
-        self.__camera.start()
+        self.__camera.run()
+
 
 
