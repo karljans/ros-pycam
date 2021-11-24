@@ -30,9 +30,9 @@ The driver will publish three topics:
 
 |              Topic                | Description                             |
 |-----------------------------------|-----------------------------------------|
-| /pycam/image/camera_info          | Camera information and calibration data |
-| /pycam/image/image_raw            | Uncompressed image, using BGR colors    |
-| /pycam/image/image_raw/compressed | JPEG compressed image                   |
+| /pycam/camera/camera_info          | Camera information and calibration data |
+| /pycam/camera/image_raw            | Uncompressed image, using BGR colors    |
+| /pycam/camera/image_raw/compressed | JPEG compressed image                   |
 
 The `/pycam` prefix of the topics can be changed using the `topic_prefix` parameter
 
