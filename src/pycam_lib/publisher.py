@@ -31,7 +31,7 @@ class PublisherException(Exception):
         return "Publisher Exception: " + str(self.message)
 
 class Publisher:
-    def __init__(self, topic_prefix='/pycam', queue_size=1, calib_file=''):
+    def __init__(self, topic_prefix='/pycam/camera', queue_size=1, calib_file=''):
         '''
         Publishes camera frames and data as ROS topics
 
@@ -94,19 +94,31 @@ class Publisher:
 
         return cam_info
 
-    def __publish_cam_info(self):
+    def __publish_cam_info(self, dimensions):
         '''
         Updates and publishes camera info as a ROS topic
 
+        Parameters:
+            dimensions: a tuple containing  image dimensions. Format is (width, height)
+
         Return:
             Timestamp for frame synchronization
+            None in case of errors
         '''
         
         # Update timestamp
         stamp = rospy.Time.from_sec(time.time())
+        self.camera_info.header.frame_id = 'pycam'
         self.camera_info.header.stamp = stamp
 
         # Publish
+        if (self.camera_info.width, self.camera_info.height) == (0, 0):
+            self.camera_info.width, self.camera_info.height = dimensions
+
+        elif (self.camera_info.width, self.camera_info.height) != dimensions:
+            # Will cause an exception
+            return None
+
         self.info_pub.publish(self.camera_info)
 
         return stamp
@@ -121,7 +133,7 @@ class Publisher:
         '''
 
         img_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
-        img_msg.header.frame_id = 'py_cam'
+        img_msg.header.frame_id = 'pycam'
         img_msg.header.stamp = stamp
 
         self.img_pub.publish(img_msg)
@@ -137,21 +149,26 @@ class Publisher:
         compressed_image = np.array(self.jpeg.encode(image)).tostring()
 
         msg = CompressedImage()
+        msg.header.frame_id = 'pycam'
         msg.header.stamp = stamp
         msg.format = "jpeg"
         msg.data = compressed_image
 
         self.compressed_pub.publish(msg)
 
-    def publish(self, image):
+    def publish(self, image, dimensions):
         '''
         Publishes an image data to ROS topic
         
         Parameters:
             image: OpenCV image to publish in ROS
+            dimensions: a tuple containing  image dimensions. Format is (width, height)
         '''
-
-        stamp = self.__publish_cam_info()
+        stamp = self.__publish_cam_info(dimensions)
+        if stamp is None:
+            return None
 
         self.__publish_raw(image, stamp)
         self.__publish_compressed(image, stamp)
+
+        return 0

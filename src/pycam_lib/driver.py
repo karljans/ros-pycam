@@ -1,11 +1,13 @@
+import os
+import signal
 import time
 
 import rospy
-import signal
 
 from pycam_lib.camera import Camera, CameraException
 from pycam_lib.log import PyCamLog
 from pycam_lib.publisher import Publisher
+
 
 class DriverException(Exception):
     '''
@@ -73,7 +75,7 @@ class Driver:
 
         # Read publisher conf
         calib_file = ''
-        topic_prefix = '/pycam/image'
+        topic_prefix = '/pycam'
         queue_size = 10
         
         if rospy.has_param('/pycam_node/calib_file'):
@@ -85,8 +87,10 @@ class Driver:
         if rospy.has_param('/pycam_node/queue_size'):
             queue_size = str(rospy.get_param('/pycam_node/queue_size'))
 
+
+
         # Setup the publisher
-        publisher = Publisher(topic_prefix, queue_size, calib_file)
+        publisher = Publisher(os.path.join(topic_prefix, 'camera'), queue_size, calib_file)
 
         # Setup the camera
         self.__camera = Camera(publisher, pipeline, measure_fps, print_fps_values, display_fps)

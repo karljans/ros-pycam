@@ -224,7 +224,11 @@ class Camera:
                 self.__callback_error = f"Unknown image format: {frmt_str}"
                 return Gst.FlowReturn.ERROR
 
-            self.__publisher.publish(image)
+            return_value = self.__publisher.publish(image, (w, h))
+            if return_value is None:
+                self.__callback_error = "Image dimensions in the calibration file are" \
+                                        " different than the dimensions of the image read from GStreamer"
+                return Gst.FlowReturn.ERROR
             
             # Clear the buffer
             buf.unmap(mapinfo)

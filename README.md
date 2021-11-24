@@ -12,9 +12,9 @@ Tested on ROS Noetic, Ubuntu 20.04
 The following packages are needed to run the driver:
 
 * GStreamer, with Python support
-* Rospy
-* Opencv
-* Numpy
+* rospy
+* opencv
+* numpy
 * libturbojpeg (and PyTurboJPEG for python support)
 
 ```
@@ -45,8 +45,6 @@ However, in addition, the following output color formats are also accepted and a
 * RGBA
 * BGRA
 * YUY2
-
-*Normally, the color conversion to BGR is automatically handled by the `videoconvert` element of the pipeline. However, on some embedded platforms, which do not possess hardware accelerated `videoconvert`, running `videoconvert` on CPU can be extremely slow. However, replacing `videoconvert` in the pipeline with `identity` and then using OpenCV's `cvtColor` function for color conversion from YUY2 to BGR can increase the framerate considerably.*
 
 ## Launch Parameters
 
