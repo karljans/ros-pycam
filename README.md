@@ -76,7 +76,7 @@ topic_prefix - Allows the user to specify alternative prefix for published topic
 
 ### Debugging
 
-** Loglevel **
+**Loglevel**
 
 ```
 loglevel - (int) Specify loglevel (default: 1)
@@ -94,7 +94,7 @@ Specifies the loglevel Available loglevels are:
 
 Currently defaults to `1 - debug`, however, the default might be changed soon to `warning`.
 
-** Publisher Queue Size Specification **
+**Publisher Queue Size Specification**
 
 ```
 queue_size - Size of the publisher queue (defaults to 1)
@@ -102,7 +102,7 @@ queue_size - Size of the publisher queue (defaults to 1)
 
 The `queue_size` parameter might be removed soon.
 
-** FPS Measurement **
+**FPS Measurement**
 
 ```
 measure_fps      - Takes FPS measurements and prints the average FPS values on screen every 10 seconds
