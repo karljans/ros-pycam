@@ -19,7 +19,7 @@ class DriverException(Exception):
 
     def __init__(self, message):
         self.message = message
-        super().__init__(self.message)
+        super().___init__(self.message)
 
     def __str__(self):
         return "Driver Exception: " + str(self.message)
@@ -31,15 +31,15 @@ class Driver:
     '''
 
     def __init__(self):
-        self.__camera = None
+        self._camera = None
 
-        signal.signal(signal.SIGINT, self.__sigint_handler)
-        signal.signal(signal.SIGTERM, self.__sigterm_handler)
+        signal.signal(signal.SIGINT, self._sigint_handler)
+        signal.signal(signal.SIGTERM, self._sigterm_handler)
 
         # Setup the driver
-        self.__setup()
+        self._setup()
 
-    def __setup(self):
+    def _setup(self):
         '''
         Reads in the parameters and configures the driver for exectution
 
@@ -93,29 +93,29 @@ class Driver:
         publisher = Publisher(os.path.join(topic_prefix, 'camera'), queue_size, calib_file)
 
         # Setup the camera
-        self.__camera = Camera(publisher, pipeline, measure_fps, print_fps_values, display_fps)
+        self._camera = Camera(publisher, pipeline, measure_fps, print_fps_values, display_fps)
 
         PyCamLog.debug("Finished driver setup")
 
-    def __sigint_handler(self, sig, frame):
+    def _sigint_handler(self, sig, frame):
         '''
         Stops the GStreamer's main loop when a SIGINT is received
         '''
         PyCamLog.debug("Received SIGINT, stopping")
-        self.__camera.stop()
+        self._camera.stop()
 
-    def __sigterm_handler(self, sig, frame):
+    def _sigterm_handler(self, sig, frame):
         '''
         Stops the GStreamer's main loop when a SIGTERM is received
         '''
         PyCamLog.debug("Received SIGTERM, stopping")
-        self.__camera.stop()
+        self._camera.stop()
 
     def run(self):
         '''
         Starts the camera
         '''
-        self.__camera.run()
+        self._camera.run()
 
 
 

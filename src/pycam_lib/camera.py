@@ -29,7 +29,7 @@ class CameraException(Exception):
 
     def __init__(self, message):
         self.message = message
-        super().__init__(self.message)
+        super().___init__(self.message)
 
     def __str__(self):
         return "Camera Exception: " + self.message
@@ -58,20 +58,20 @@ class Camera:
     def __init__(self, publisher=None, pipeline_str=None, 
                  measure_fps=False, print_fps_values=False, display_fps=False):
         
-        self.__publisher = publisher
-        self.__shutdown = False
-        self.__callback_error = None
+        self._publisher = publisher
+        self._shutdown = False
+        self._callback_error = None
 
         # For FPS calculation
-        self.__measure_fps = measure_fps
-        self.__display_fps = display_fps
-        self.__print_fps_values = print_fps_values 
+        self._measure_fps = measure_fps
+        self._display_fps = display_fps
+        self._print_fps_values = print_fps_values 
 
-        self.__prev_frame_time = 0
-        self.__fps_measure_time_start = 0
+        self._prev_frame_time = 0
+        self._fps_measure_time_start = 0
 
-        self.__fps_values = []
-        self.__last_avg_fps = None
+        self._fps_values = []
+        self._last_avg_fps = None
 
         # Initialize GStreamer
         Gst.init(None)
@@ -79,9 +79,9 @@ class Camera:
         __pipeline = None
 
         # Set up camera
-        self.__setup(pipeline_str)
+        self._setup(pipeline_str)
 
-    def __setup(self, pipeline_str):
+    def _setup(self, pipeline_str):
 
         '''
         Sets up and opens video input and reads back video parameters
@@ -116,47 +116,47 @@ class Camera:
             pipeline_str += f' ! {APPSINK_STR}'
 
         PyCamLog.info(f"Opening pipeline: {pipeline_str}")
-        self.__pipeline = Gst.parse_launch(pipeline_str)
+        self._pipeline = Gst.parse_launch(pipeline_str)
 
-        if self.__pipeline is None:
+        if self._pipeline is None:
             raise CameraException("GStreamer pipeline parsing failed! "
                                   "Please verify that the pipeline string is correct.")
 
         # Connect the appsink to our program
-        appsink = self.__pipeline.get_by_name('appsink')
+        appsink = self._pipeline.get_by_name('appsink')
 
         appsink.set_property('emit-signals', True)
-        appsink.connect('new-sample', self.__new_sample_callback)
+        appsink.connect('new-sample', self._new_sample_callback)
 
         PyCamLog.debug("Camera setup complete")
 
-    def __calculate_fps(self):
+    def _calculate_fps(self):
         '''
         Calculates average FPS and prints it on the screen
         '''
 
         curr_time = time.time()
 
-        fps = round(1 / (curr_time - self.__prev_frame_time))
-        self.__prev_frame_time = curr_time
+        fps = round(1 / (curr_time - self._prev_frame_time))
+        self._prev_frame_time = curr_time
 
-        self.__fps_values.append(fps)
+        self._fps_values.append(fps)
 
-        if curr_time - self.__fps_measure_time_start >= FPS_AVG_TIME:
-            avg_fps = round(sum(self.__fps_values) / len(self.__fps_values))
+        if curr_time - self._fps_measure_time_start >= FPS_AVG_TIME:
+            avg_fps = round(sum(self._fps_values) / len(self._fps_values))
 
-            if self.__display_fps:
-                self.__last_avg_fps = avg_fps
+            if self._display_fps:
+                self._last_avg_fps = avg_fps
 
-            if self.__print_fps_values:
-                print(self.__fps_values)
+            if self._print_fps_values:
+                print(self._fps_values)
 
             print('AVG FPS:', avg_fps)
 
-            self.__fps_values = []
-            self.__fps_measure_time_start = curr_time
+            self._fps_values = []
+            self._fps_measure_time_start = curr_time
 
-    def __new_sample_callback(self, sink):
+    def _new_sample_callback(self, sink):
         '''
         Processes the sample received from GStreamer and publishes it.
         This function is called by GStreamer when a new sample is available
@@ -168,8 +168,8 @@ class Camera:
             Gst.FlowReturn.OK
         '''
 
-        if self.__measure_fps:
-            self.__calculate_fps()
+        if self._measure_fps:
+            self._calculate_fps()
 
         # Get a frame from appsink
         sample = sink.emit('pull-sample')
@@ -205,13 +205,13 @@ class Camera:
                     image = cv2.cvtColor(image, cv2.COLOR_YUV2BGR_YUY2)
 
                 else:
-                    self.__callback_error = f"Unknown image format: {frmt_str}"
+                    self._callback_error = f"Unknown image format: {frmt_str}"
                     return Gst.FlowReturn.ERROR
 
             # FPS
-            if self.__display_fps:
-                if self.__last_avg_fps:
-                    text = f"AVG FPS: {self.__last_avg_fps}"
+            if self._display_fps:
+                if self._last_avg_fps:
+                    text = f"AVG FPS: {self._last_avg_fps}"
                 else:
                     text = "Calculating FPS"
 
@@ -220,13 +220,13 @@ class Camera:
                                     (100, 255, 0), 3, cv2.LINE_AA)
 
             # Publish the image
-            if self.__publisher is None:
-                self.__callback_error = f"Unknown image format: {frmt_str}"
+            if self._publisher is None:
+                self._callback_error = f"Unknown image format: {frmt_str}"
                 return Gst.FlowReturn.ERROR
 
-            return_value = self.__publisher.publish(image, (w, h))
+            return_value = self._publisher.publish(image, (w, h))
             if return_value is None:
-                self.__callback_error = "Image dimensions in the calibration file are" \
+                self._callback_error = "Image dimensions in the calibration file are" \
                                         " different than the dimensions of the image read from GStreamer"
                 return Gst.FlowReturn.ERROR
             
@@ -244,15 +244,15 @@ class Camera:
         
         # For FPS calculation
         curr_time = time.time()
-        self.__prev_frame_time = curr_time
-        self.__fps_measure_time_start = curr_time
+        self._prev_frame_time = curr_time
+        self._fps_measure_time_start = curr_time
 
         # Start the pipeline
-        self.__pipeline.set_state(Gst.State.PLAYING)
-        bus = self.__pipeline.get_bus()
+        self._pipeline.set_state(Gst.State.PLAYING)
+        bus = self._pipeline.get_bus()
 
         # Monitor the communication bus for messages from GST
-        while not self.__shutdown:
+        while not self._shutdown:
             message = bus.timed_pop_filtered(10000, Gst.MessageType.ANY)
 
             if message:
@@ -287,12 +287,12 @@ class Camera:
                 else:
                     PyCamLog.debug(f"Unprocessed GST message received. MSG Type: {message.type}")
 
-            if self.__callback_error:
-                self.__pipeline.set_state(Gst.State.NULL)
-                raise CameraException(self.__callback_error)
+            if self._callback_error:
+                self._pipeline.set_state(Gst.State.NULL)
+                raise CameraException(self._callback_error)
 
         # We are exiting. Stop the pipeline
-        self.__pipeline.set_state(Gst.State.NULL)
+        self._pipeline.set_state(Gst.State.NULL)
         PyCamLog.debug("Camera main loop has stopped")
 
     def stop(self):
@@ -302,5 +302,5 @@ class Camera:
 
         PyCamLog.debug("Stopping camera main loop")
 
-        self.__shutdown = True
+        self._shutdown = True
         

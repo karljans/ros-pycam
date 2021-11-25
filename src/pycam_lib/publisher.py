@@ -25,7 +25,7 @@ class PublisherException(Exception):
 
     def __init__(self, message):
         self.message = message
-        super().__init__(self.message)
+        super().___init__(self.message)
 
     def __str__(self):
         return "Publisher Exception: " + str(self.message)
@@ -51,13 +51,13 @@ class Publisher:
         self.img_pub = rospy.Publisher(img_raw_topic, Image, queue_size=queue_size)
         self.compressed_pub = rospy.Publisher(img_compressed_topic, CompressedImage, queue_size=queue_size)
 
-        self.camera_info = self.__get_camera_info(calib_file)
+        self.camera_info = self._get_camera_info(calib_file)
 
         self.bridge = CvBridge()
 
         self.jpeg = TurboJPEG()
 
-    def __get_camera_info(self, calib_file):
+    def _get_camera_info(self, calib_file):
         '''
         Reads the camera calibration file and outputs a CameraInfo object
         If calib_file is an empty string, an empty CameraInfo object is returned
@@ -94,7 +94,7 @@ class Publisher:
 
         return cam_info
 
-    def __publish_cam_info(self, dimensions):
+    def _publish_cam_info(self, dimensions):
         '''
         Updates and publishes camera info as a ROS topic
 
@@ -123,7 +123,7 @@ class Publisher:
 
         return stamp
 
-    def __publish_raw(self, image, stamp):
+    def _publish_raw(self, image, stamp):
         '''
         Publishes raw image in ROS
 
@@ -138,7 +138,7 @@ class Publisher:
 
         self.img_pub.publish(img_msg)
 
-    def __publish_compressed(self, image, stamp):
+    def _publish_compressed(self, image, stamp):
         '''
         Publishes raw image in ROS
 
@@ -164,11 +164,11 @@ class Publisher:
             image: OpenCV image to publish in ROS
             dimensions: a tuple containing  image dimensions. Format is (width, height)
         '''
-        stamp = self.__publish_cam_info(dimensions)
+        stamp = self._publish_cam_info(dimensions)
         if stamp is None:
             return None
 
-        self.__publish_raw(image, stamp)
-        self.__publish_compressed(image, stamp)
+        self._publish_raw(image, stamp)
+        self._publish_compressed(image, stamp)
 
         return 0
