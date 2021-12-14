@@ -77,6 +77,8 @@ class Driver:
         calib_file = ''
         topic_prefix = '/pycam'
         queue_size = 10
+        compress = False
+        frame_id = 'pycam'
         
         if rospy.has_param('/pycam_node/calib_file'):
             calib_file = str(rospy.get_param('/pycam_node/calib_file'))
@@ -87,10 +89,15 @@ class Driver:
         if rospy.has_param('/pycam_node/queue_size'):
             queue_size = str(rospy.get_param('/pycam_node/queue_size'))
 
+        if rospy.has_param('/pycam_node/compressed_stream'):
+            compress = bool(rospy.get_param('/pycam_node/publish_compressed'))
 
+        if rospy.has_param('/pycam_node/frame_id'):
+            frame_id = str(rospy.get_param('/pycam_node/frame_id'))
 
         # Setup the publisher
-        publisher = Publisher(os.path.join(topic_prefix, 'camera'), queue_size, calib_file)
+        publisher = Publisher(os.path.join(topic_prefix, 'camera'), 
+                              queue_size, calib_file, compress, frame_id)
 
         # Setup the camera
         self._camera = Camera(publisher, pipeline, measure_fps, print_fps_values, display_fps)

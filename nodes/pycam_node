@@ -13,18 +13,43 @@ from pycam_lib.publisher import PublisherException
 gi.require_version('Gst', '1.0')
 from gi.repository import GLib
 
-LOG_LEVEL = rospy.DEBUG
+LOG_LEVELS = {
+    'debug': rospy.DEBUG,
+    'info': rospy.INFO,
+    'warning': rospy.WARN,
+    'error': rospy.ERROR,
+    'fatal': rospy.FATAL,
+}
+
+DEFAULT_LOGELEVEL_STR = 'info'
+DEFAULT_LOGLEVEL = LOG_LEVELS[DEFAULT_LOGELEVEL_STR]
 
 def node_main():
 
+    loglevel_err = None
+
+    print(rospy.WARN)
+
     # Set up logging
     if rospy.has_param('/pycam_node/loglevel'):
-        loglevel = rospy.get_param('/pycam_node/loglevel')
+        loglevel_str = str(rospy.get_param('/pycam_node/loglevel'))
+
+        if loglevel_str not in LOG_LEVELS.keys():
+            loglevel_err = f"Log level {loglevel_str} is not a valid log level! Falling back to default log level ({DEFAULT_LOGELEVEL_STR})!"
+
+            loglevel = DEFAULT_LOGLEVEL
+
+        else:
+            loglevel = LOG_LEVELS[loglevel_str]
+
     else:
-        loglevel = LOG_LEVEL
+        loglevel = DEFAULT_LOGLEVEL
 
     # Initialize node
     rospy.init_node('pycam', log_level=loglevel)
+    if loglevel_err:
+        PyCamLog.warn(loglevel_err)
+
     PyCamLog.debug("Node Init Started")
 
     try:

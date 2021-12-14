@@ -75,8 +75,6 @@ class Camera:
 
         # Initialize GStreamer
         Gst.init(None)
-        __gst_mainloop = None
-        __pipeline = None
 
         # Set up camera
         self._setup(pipeline_str)

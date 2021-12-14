@@ -25,13 +25,13 @@ class PublisherException(Exception):
 
     def __init__(self, message):
         self.message = message
-        super().__init__(self.message)
+        super()._init_(self.message)
 
     def __str__(self):
         return "Publisher Exception: " + str(self.message)
 
 class Publisher:
-    def __init__(self, topic_prefix='/pycam/camera', queue_size=1, calib_file=''):
+    def __init__(self, topic_prefix='/pycam/camera', queue_size=1, calib_file='', compress=False, frame_id='pycam'):
         '''
         Publishes camera frames and data as ROS topics
 
@@ -49,13 +49,19 @@ class Publisher:
 
         self.info_pub = rospy.Publisher(info_topic, CameraInfo, queue_size=queue_size)
         self.img_pub = rospy.Publisher(img_raw_topic, Image, queue_size=queue_size)
-        self.compressed_pub = rospy.Publisher(img_compressed_topic, CompressedImage, queue_size=queue_size)
+
 
         self.camera_info = self._get_camera_info(calib_file)
 
         self.bridge = CvBridge()
 
-        self.jpeg = TurboJPEG()
+        self._compress = compress
+
+        self._frame_id = frame_id
+
+        if self._compress:
+            self.compressed_pub = rospy.Publisher(img_compressed_topic, CompressedImage, queue_size=queue_size)
+            self.jpeg = TurboJPEG()
 
     def _get_camera_info(self, calib_file):
         '''
@@ -108,7 +114,7 @@ class Publisher:
         
         # Update timestamp
         stamp = rospy.Time.from_sec(time.time())
-        self.camera_info.header.frame_id = 'pycam'
+        self.camera_info.header.frame_id = self._frame_id
         self.camera_info.header.stamp = stamp
 
         # Publish
@@ -133,7 +139,7 @@ class Publisher:
         '''
 
         img_msg = self.bridge.cv2_to_imgmsg(image, "bgr8")
-        img_msg.header.frame_id = 'pycam'
+        img_msg.header.frame_id = self._frame_id
         img_msg.header.stamp = stamp
 
         self.img_pub.publish(img_msg)
@@ -149,7 +155,7 @@ class Publisher:
         compressed_image = np.array(self.jpeg.encode(image)).tostring()
 
         msg = CompressedImage()
-        msg.header.frame_id = 'pycam'
+        msg.header.frame_id = self._frame_id
         msg.header.stamp = stamp
         msg.format = "jpeg"
         msg.data = compressed_image
@@ -169,6 +175,8 @@ class Publisher:
             return None
 
         self._publish_raw(image, stamp)
-        self._publish_compressed(image, stamp)
+
+        if self._compress:
+            self._publish_compressed(image, stamp)
 
         return 0
