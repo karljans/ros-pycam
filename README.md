@@ -22,7 +22,7 @@ sudo apt-get install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-pl
 ```
 
 ```
-pip3 install numpy python-opencv PyTurboJPEG
+pip3 install numpy opencv-python PyTurboJPEG
 ```
 
 ## Published topics

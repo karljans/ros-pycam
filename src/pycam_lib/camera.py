@@ -29,7 +29,7 @@ class CameraException(Exception):
 
     def __init__(self, message):
         self.message = message
-        super().___init__(self.message)
+        super().__init__(self.message)
 
     def __str__(self):
         return "Camera Exception: " + self.message
@@ -276,7 +276,7 @@ class Camera:
                     PyCamLog.debug(f"GST QoS warning (dropped frame?)")
 
                 elif message.type == Gst.MessageType.WARNING:
-                    warn, debug = message.parse_qos_stats()
+                    warn, debug = message.parse_warning()
                     PyCamLog.warn(f"GST WARN from element {message.src.get_name()}: {warn}")
                     PyCamLog.debug(f"GST WARN debug info: {debug}")
 
