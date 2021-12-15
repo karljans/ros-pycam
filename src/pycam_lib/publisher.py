@@ -50,7 +50,6 @@ class Publisher:
         self.info_pub = rospy.Publisher(info_topic, CameraInfo, queue_size=queue_size)
         self.img_pub = rospy.Publisher(img_raw_topic, Image, queue_size=queue_size)
 
-
         self.camera_info = self._get_camera_info(calib_file)
 
         self.bridge = CvBridge()
