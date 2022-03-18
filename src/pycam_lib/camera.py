@@ -261,7 +261,8 @@ class Camera:
                     break
 
                 elif message.type == Gst.MessageType.EOS:
-                    PyCamLog.info(f"GST ERROR debug info: {debug}")
+                    PyCamLog.info(f"End of stream")
+                    self._shutdown = True
                     break
 
                 elif message.type == Gst.MessageType.STATE_CHANGED:
