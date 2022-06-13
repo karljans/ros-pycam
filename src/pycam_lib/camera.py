@@ -56,11 +56,13 @@ class Camera:
     '''
     
     def __init__(self, publisher=None, pipeline_str=None, 
-                 measure_fps=False, print_fps_values=False, display_fps=False):
+                 measure_fps=False, print_fps_values=False, display_fps=False, resize_dim = (None, None)):
         
         self._publisher = publisher
         self._shutdown = False
         self._callback_error = None
+
+        self._resize_dim = resize_dim
 
         # For FPS calculation
         self._measure_fps = measure_fps
@@ -205,6 +207,9 @@ class Camera:
                 else:
                     self._callback_error = f"Unknown image format: {frmt_str}"
                     return Gst.FlowReturn.ERROR
+
+            if None not in self._resize_dim:
+                image = cv2.resize(image, self._resize_dim)
 
             # FPS
             if self._display_fps:

@@ -63,6 +63,7 @@ class Driver:
         print_fps_values = False
         display_fps = False
 
+
         if rospy.has_param('/pycam_node/measure_fps'):
             measure_fps = bool(rospy.get_param('/pycam_node/measure_fps'))
 
@@ -72,6 +73,19 @@ class Driver:
         if rospy.has_param('/pycam_node/display_fps'):
             display_fps = bool(rospy.get_param('/pycam_node/display_fps'))
             measure_fps = bool(rospy.get_param('/pycam_node/measure_fps'))
+
+        # Resize
+        resize_width = None
+        resize_height = None
+        should_resize = False
+
+        if rospy.has_param('/pycam_node/resize_width'):
+            resize_width = int(rospy.get_param('/pycam_node/resize_width'))
+
+        if rospy.has_param('/pycam_node/resize_height'):
+            resize_height = int(rospy.get_param('/pycam_node/resize_height'))
+
+        resize_dim = tuple([resize_width, resize_height])
 
         # Read publisher conf
         calib_file = ''
@@ -89,7 +103,7 @@ class Driver:
         if rospy.has_param('/pycam_node/queue_size'):
             queue_size = str(rospy.get_param('/pycam_node/queue_size'))
 
-        if rospy.has_param('/pycam_node/compressed_stream'):
+        if rospy.has_param('/pycam_node/publish_compressed'):
             compress = bool(rospy.get_param('/pycam_node/publish_compressed'))
 
         if rospy.has_param('/pycam_node/frame_id'):
@@ -100,7 +114,7 @@ class Driver:
                               queue_size, calib_file, compress, frame_id)
 
         # Setup the camera
-        self._camera = Camera(publisher, pipeline, measure_fps, print_fps_values, display_fps)
+        self._camera = Camera(publisher, pipeline, measure_fps, print_fps_values, display_fps, resize_dim)
 
         PyCamLog.debug("Finished driver setup")
 
